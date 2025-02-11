@@ -12,4 +12,6 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     // Fetch quiz time by ID
     @Query("SELECT q FROM Quiz q WHERE q.id = :id")
     Quiz findQuizTimeById(Long id);
+
+
 }

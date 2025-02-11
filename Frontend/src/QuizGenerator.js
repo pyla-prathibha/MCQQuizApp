@@ -88,14 +88,34 @@ const QuizGenerator = () => {
     };
 
     console.log("Sending quiz data:", quizData); // Debugging
-
     try {
+      console.log("Sending quiz data:", JSON.stringify(quizData, null, 2));
+      
       const response = await axios.post("http://localhost:8080/api/quizzes", quizData);
-      console.log("Quiz generated successfully:", response.data);
+      
+      if (response.data.id) {
+        console.log("Quiz created successfully:", response.data);
+    
+        const invitePayload = { quizId: response.data.id, userIds: quizData.invitedUsers };
+    
+        console.log("Sending invitation payload:", JSON.stringify(invitePayload, null, 2));
+    
+        const inviteResponse = await axios.post("http://localhost:8080/api/quizzes/invite-users", invitePayload);
+        
+        console.log("Invitations sent successfully:", inviteResponse.data);
+      } else {
+        console.error("Quiz creation failed. Response did not contain an ID.");
+      }
     } catch (error) {
-      console.error("Failed to generate quiz:", error);
+      if (error.response) {
+        console.error("Error Response Data:", error.response.data);
+        console.error("Error Status Code:", error.response.status);
+      } else {
+        console.error("Network or Unknown Error:", error);
+      }
     }
-  };
+  }
+    
 
   const getRandomItemsFromArray = (array, count) => {
     const shuffledArray = [...array].sort(() => Math.random() - 0.5);
@@ -139,7 +159,7 @@ const QuizGenerator = () => {
             ))}
           </select>
         </div>
-        <div className="form-group">
+        <div className="form-group"> 
           <label htmlFor="numQuestions">Number of Questions:</label>
           <input
             type="number"

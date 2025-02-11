@@ -11,5 +11,5 @@ import java.util.Random;
 
 @Repository
 public interface QuestionRepository extends JpaRepository<Questions, Long> { // ✅ Correct entity
-    //List<Questions> findByQuizId(Long quizId); // ✅ Ensure return type is correct
+    //List<Questions> findByQuiz_Id(Long quizId);
 }

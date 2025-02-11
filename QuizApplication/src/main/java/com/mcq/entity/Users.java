@@ -2,32 +2,24 @@ package com.mcq.entity;
 
 import jakarta.persistence.*;
 
-import java.util.List;
-
 @Entity
 @Table(name = "users")
 public class Users {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @Column(nullable = false)
-    private String username;
+	@Column(nullable = false)
+	private String username;
 
-    @Column(nullable = false)
-    private String password;
+	@Column(nullable = false)
+	private String password;
 
-    @Column(nullable = false)
-    private String email;
+	@Column(nullable = false)
+	private String email;
 
-    @Column(nullable = false)
-    private boolean isAdmin;
-
-	// **New: Many-to-Many Relationship for Invited Quizzes**
-	@ManyToMany(mappedBy = "invitedUsers")
-	private List<Quiz> invitedQuizzes;
-
-	//public Users() {}
+	@Column(nullable = false)
+	private boolean isAdmin;
 
 	public Users(Long id, String username, String password, String email, boolean isAdmin) {
 		super();
@@ -81,6 +73,4 @@ public class Users {
 	public Users() {
 		super();
 	}
-
-    // Constructors, getters, setters
 }

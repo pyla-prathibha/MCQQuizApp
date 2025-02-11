@@ -1,29 +1,26 @@
 package com.mcq.controller;
 
-import java.util.List;
-
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.mcq.entity.Questions;
 import com.mcq.service.QuestionService;
+import com.mcq.service.QuizService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/questions")
 @CrossOrigin(origins = "http://localhost:3000")
 public class QuestionController {
-    private final QuestionService questionService;
 
-    public QuestionController(QuestionService questionService) {
+    private final QuestionService questionService;
+    private final QuizService quizService;
+
+    // Inject both QuestionService and QuizService via the constructor
+    public QuestionController(QuestionService questionService, QuizService quizService) {
         this.questionService = questionService;
+        this.quizService = quizService;
     }
 
     @PostMapping("/addquestion")
@@ -50,5 +47,18 @@ public class QuestionController {
     public List<Questions> getAllQuestions() {
         System.out.println("Inside Get all question");
         return questionService.getAllQuestions();
+    }
+
+    // This endpoint retrieves questions for a specific quiz.
+    // It calls a method in QuizService to get questions based on a quiz ID.
+    @GetMapping("/questions")
+    public ResponseEntity<?> getQuestions(@RequestParam Long quizId) {
+        try {
+            List<Questions> questions = quizService.getQuestionsForQuiz(quizId);
+            return ResponseEntity.ok(questions);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error fetching questions: " + e.getMessage());
+        }
     }
 }

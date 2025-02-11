@@ -3,23 +3,24 @@ package com.mcq.controller;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.mcq.repository.QuizInviteRepository;
 
+import com.mcq.dto.InviteRequest;
 import com.mcq.entity.Questions;
 import com.mcq.entity.Quiz;
-import com.mcq.entity.QuizQuestion;
 import com.mcq.repository.QuizRepository;
+import com.mcq.repository.QuizInviteRepository;
 import com.mcq.service.QuizService;
 
 @RestController
 @RequestMapping("/api/quizzes")
 @CrossOrigin(origins = "http://localhost:3000")
 public class QuizController {
+
 	private final QuizService quizService;
 	private final QuizRepository quizRepository;
 
@@ -34,6 +35,7 @@ public class QuizController {
 	@PostMapping
 	public ResponseEntity<?> createQuiz(@RequestBody Map<String, Object> requestData) {
 		try {
+			// Extract data from the request
 			String quizName = (String) requestData.get("quizName");
 			String technology = (String) requestData.get("technology");
 			String startTime = (String) requestData.get("startTime");
@@ -41,8 +43,10 @@ public class QuizController {
 			int numQuestions = (int) requestData.get("numQuestions");
 			List<Integer> invitedUserIds = (List<Integer>) requestData.getOrDefault("invitedUsers", new ArrayList<>());
 
-			// Convert to List<Long> safely
-			List<Long> invitedUsers = invitedUserIds.stream().map(Long::valueOf).collect(Collectors.toList());
+			// Convert invitedUserIds to List<Long>
+			List<Long> invitedUsers = invitedUserIds.stream()
+					.map(Long::valueOf)
+					.collect(Collectors.toList());
 
 			Quiz quiz = new Quiz();
 			quiz.setQuizName(quizName);
@@ -54,19 +58,53 @@ public class QuizController {
 
 			return ResponseEntity.ok(savedQuiz);
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error creating quiz: " + e.getMessage());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("Error creating quiz: " + e.getMessage());
 		}
 	}
 
+	// Endpoint to invite users to a quiz.
+	// The request body should be a JSON object with keys "quizId" and "invitedUsers".
+	// Example:
+	// {
+	//   "quizId": 1,
+	//   "invitedUsers": [7]
+	// }
+	@PostMapping("/invite-users")
+	public ResponseEntity<?> inviteUsers(@RequestBody InviteRequest inviteRequest) {
+		// Log or inspect the inviteRequest object to confirm the fields
+		System.out.println("Received quizId: " + inviteRequest.getQuizId());
+		System.out.println("Received invitedUserNumbers: " + inviteRequest.getInvitedUserNumbers());
+
+		// Process the invitation. (This example just logs the user IDs.)
+		inviteRequest.getInvitedUserNumbers().stream()
+				.forEach(userId -> System.out.println("Inviting user: " + userId));
+
+		return ResponseEntity.ok("Users invited successfully");
+	}
+	@GetMapping("/isUserInvited/{quizId}")
+	public ResponseEntity<Map<String, String>> isUserInvited(
+			@PathVariable Long quizId,
+			@RequestParam Long userId) {
+
+		boolean isInvited = quizInviteRepository.existsByQuiz_IdAndUser_IdAndInvitedStatus(quizId, userId, true);
+		System.out.println("Backend Check: quizId=" + quizId + ", userId=" + userId + ", isInvited=" + isInvited);
+
+		Map<String, String> response = new HashMap<>();
+		response.put("isInvited", isInvited ? "true" : "false");
+
+		if (!isInvited) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN)
+					.body(Collections.singletonMap("error", "User is not invited to this quiz"));
+		}
+
+		return ResponseEntity.ok(response);
+	}
 
 
 	@GetMapping("/{id}")
 	public Quiz getQuizById(@PathVariable Long id) {
-		Quiz quiz = quizService.getQuizById(id);
-		System.out.println("Fetched Quiz: " + quiz.getQuizName());
-		System.out.println("Start Time: " + quiz.getStartTime());
-		System.out.println("End Time: " + quiz.getEndTime());
-		return quiz;
+		return quizService.getQuizById(id);
 	}
 
 	@PutMapping("/{id}")
@@ -86,7 +124,6 @@ public class QuizController {
 
 	@GetMapping("/getQuizQuestById/{id}")
 	public List<Questions> getQuizQuestById(@PathVariable Long id) {
-		System.out.println("Inside Get Quiz quest by Id");
 		return quizService.getQuizQuestById(id);
 	}
 
@@ -101,21 +138,5 @@ public class QuizController {
 		} else {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
 		}
-
-
 	}
-
-
-
-	@PostMapping("/{quizId}/attempt")
-	public ResponseEntity<?> attemptQuiz(@PathVariable Long quizId, @RequestParam Long userId) {
-		boolean isInvited = quizInviteRepository.existsByQuizIdAndUserId(quizId, userId);
-
-		if (!isInvited) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not invited to this quiz.");
-		}
-
-		return ResponseEntity.ok("You can attempt the quiz!");
-	}
-
 }
